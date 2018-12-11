@@ -15,7 +15,7 @@ TOKEN = '703792165:AAHXhlm08UQ05UjqkrjxAEYYJfTA2Lxmubo'
 apihelper.proxy = {'https': 'socks5://127.0.0.1:9150'}
 
 #Создаем объект для доступа к базе данных
-db = Database()
+db = Database('bot_database')
 
 #Словарь для записи пар жанр-песня для конкретного чата
 song_updater = {}
@@ -28,6 +28,10 @@ genre_keyboard = types.InlineKeyboardMarkup(row_width = 1)
 for genre in genres:
     button = types.InlineKeyboardButton(text = genre, callback_data = genre)
     genre_keyboard.add(button)
+
+#Создаем функцию для проверки валидности ссылки на песню на SoundCloud
+def validate_link(link):
+    pass
 
 bot = telebot.TeleBot(TOKEN)
 
