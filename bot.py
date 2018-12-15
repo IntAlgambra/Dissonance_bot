@@ -6,8 +6,12 @@ from dbt import Database
 #Импортируем библиотеку для работы с API телеграм ботов
 import telebot
 from telebot import types
+from telebot import apihelper
 
 TOKEN = '695230871:AAEllCSIVMCT8kwYC0LPxRdsEm80Pe7qvRY'
+
+#Прокси для тестирования бота на локальном компе через тор, при развертывании на сервере закомментировать
+apihelper.proxy = {'https': 'socks5://127.0.0.1:9150'}
 
 #Создаем объект для доступа к базе данных
 db = Database('test_database')
@@ -63,8 +67,3 @@ def new_genre_choice(call):
 
 if __name__ == '__main__':
     bot.polling()
-
-
-
-
-

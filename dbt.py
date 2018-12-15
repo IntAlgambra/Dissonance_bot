@@ -96,9 +96,10 @@ class Database():
 		    genre = session.query(Genre).filter(Genre.genre == genre).first()
 		    session.delete(genre)
 		    session.commit()
+		    return True
 		except UnmappedInstanceError:
 			session.rollback()
-			print('There is no such genre')
+			return False
 		finally:
 		    self.session.remove()
 
@@ -120,9 +121,10 @@ class Database():
 		    song = session.query(Song).filter(Song.link == link).first()
 		    session.delete(song)
 		    session.commit()
+		    return(True)
 		except UnmappedInstanceError:
 			session.rollback()
-			print('There is no such song')
+			return(False)
 		finally:
 		    self.session.remove()
 
