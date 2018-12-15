@@ -82,7 +82,7 @@ def genre_handler(message):
     except Exception as e:
         bot.reply_to(message, 'oops')
 
-#Блок добавления новой печни в два шага: 1 - выбор жанра, 2 - ввод ссылки
+#Блок добавления новой песни в два шага: 1 - выбор жанра, 2 - ввод ссылки
 @bot.message_handler(commands = ['add_song'])
 def add_song(message):
     chat_id = message.chat.id
@@ -96,14 +96,14 @@ def add_genre_choice(call):
             chat_id = call.message.chat.id
             song_updater[chat_id] = genre
             msg = bot.send_message(chat_id, 'input link to SoundCloud')
-            bot.register_next_step_handler(msg, link_handler)
+            bot.register_next_step_handler(msg, link_handler, genre)
 
-def link_handler(message):
+def link_handler(message, genre):
     try:
         chat_id = message.chat.id
         link = message.text
         if validate_link(link):
-            db.add_song(link, song_updater[chat_id])
+            db.add_song(link, genre)
             bot.send_message(chat_id, 'added')
         else:
             bot.reply_to(message, 'This link is not valid')
