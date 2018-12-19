@@ -4,6 +4,7 @@ from sqlalchemy.orm import sessionmaker, relationship, scoped_session
 from sqlalchemy.ext.declarative import declarative_base
 
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import OperationalError
 
 from sqlalchemy.orm.exc import UnmappedInstanceError
 
@@ -188,7 +189,12 @@ class Database():
 
 	def get_genres(self):
 		session = self.session()
-		genres_query = session.query(Genre).all()
-		genres = [genre.genre for genre in genres_query]
-		self.session.remove()
-		return genres
+		try:
+		    genres_query = session.query(Genre).all()
+		    genres = [genre.genre for genre in genres_query]
+		    return genres
+		except OperationalError:
+			session.rollback()
+			return False
+		finally:
+			self.session.remove()
