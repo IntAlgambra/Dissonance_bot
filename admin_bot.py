@@ -8,7 +8,6 @@ import telebot
 from telebot import apihelper
 from telebot import types
 
-import pprint
 
 TOKEN = '703792165:AAHXhlm08UQ05UjqkrjxAEYYJfTA2Lxmubo'
 
@@ -18,23 +17,27 @@ apihelper.proxy = {'https': 'socks5://127.0.0.1:9150'}
 #Создаем объект для доступа к базе данных
 db = Database('test_database')
 
-#Словарь для записи пар жанр-песня для конкретного чата
-song_updater = {}
-
-#Получаем список жанров из базы данных
-genres = db.get_genres()
-
 #Создаем объект клавиатуры для добавления песни
-add_song_genre_keyboard = types.InlineKeyboardMarkup(row_width = 1)
-for genre in genres:
-    button = types.InlineKeyboardButton(text = genre, callback_data = 'add_{}'.format(genre))
-    add_song_genre_keyboard.add(button)
+def make_add_song_keyboard():
+    genres = db.get_genres()
+    add_song_keyboard = types.InlineKeyboardMarkup(row_width = 1)
+    for genre in genres:
+        button = types.InlineKeyboardButton(text = genre, callback_data = 'add_{}'.format(genre))
+        add_song_keyboard.add(button)
+    cancel_button = types.InlineKeyboardButton(text = 'cancel', callback_data = 'add_cancel')
+    add_song_keyboard.add(cancel_button)
+    return(add_song_keyboard)
 
 #Создаем объект клавиатуры для удаления жанра
-del_genre_keyboard = types.InlineKeyboardMarkup(row_width = 1)
-for genre in genres:
-    button = types.InlineKeyboardButton(text = genre, callback_data = 'del_{}'.format(genre))
-    del_genre_keyboard.add(button)
+def make_del_genre_keyboard():
+    genres = db.get_genres()
+    del_genre_keyboard = types.InlineKeyboardMarkup(row_width = 1)
+    for genre in genres:
+        button = types.InlineKeyboardButton(text = genre, callback_data = 'del_{}'.format(genre))
+        del_genre_keyboard.add(button)
+    cancel_button = types.InlineKeyboardButton(text = 'cancel', callback_data = 'del_cancel')
+    del_genre_keyboard.add(cancel_button)
+    return(del_genre_keyboard)
 
 #Создаем функцию для проверки валидности ссылки на песню на SoundCloud
 def validate_link(link):
@@ -43,8 +46,9 @@ def validate_link(link):
         return True
     else:
         return False
-#создаем объект бота
-bot = telebot.TeleBot(TOKEN)
+
+#создаем объект бота, запрещаем многопоточность по требованиям хостинга
+bot = telebot.TeleBot(TOKEN, threaded = False)
 
 #Обработчик команды старт
 @bot.message_handler(commands = ['start'])
@@ -70,23 +74,27 @@ def send_genres(message):
 @bot.message_handler(commands = ['add_genre'])
 def add_genre(message):
     chat_id = message.chat.id
-    msg = bot.send_message(chat_id, 'input genre_name')
+    msg = bot.send_message(chat_id, 'input genre_name or N/n to cancel')
     bot.register_next_step_handler(msg, genre_handler)
 
 def genre_handler(message):
     try:
         chat_id = message.chat.id
         genre = message.text
-        db.add_genre(genre)
-        bot.send_message(chat_id, 'Added')
+        if genre == 'N' or genre == 'n':
+            bot.send_message(chat_id, 'canceled')
+        else:
+            db.add_genre(genre)
+            bot.send_message(chat_id, 'Added')
     except Exception as e:
-        bot.reply_to(message, 'oops')
+        bot.reply_to(message, 'some problem occured, genre has not been added')
 
 #Блок добавления новой песни в два шага: 1 - выбор жанра, 2 - ввод ссылки
 @bot.message_handler(commands = ['add_song'])
 def add_song(message):
     chat_id = message.chat.id
-    bot.send_message(chat_id, 'choose genre', reply_markup = add_song_genre_keyboard)
+    add_song_keyboard = make_add_song_keyboard()
+    bot.send_message(chat_id, 'choose genre', reply_markup = add_song_keyboard)
 
 @bot.callback_query_handler(func=lambda call: call.data.split('_')[0] == 'add')
 def add_genre_choice(call):
@@ -94,9 +102,11 @@ def add_genre_choice(call):
         if call.data:
             genre = call.data.split('_')[-1]
             chat_id = call.message.chat.id
-            song_updater[chat_id] = genre
-            msg = bot.send_message(chat_id, 'input link to SoundCloud')
-            bot.register_next_step_handler(msg, link_handler, genre)
+            if genre == 'cancel':
+                bot.send_message(chat_id, 'canceled')
+            else:
+                msg = bot.send_message(chat_id, 'input link to SoundCloud')
+                bot.register_next_step_handler(msg, link_handler, genre)
 
 def link_handler(message, genre):
     try:
@@ -108,7 +118,7 @@ def link_handler(message, genre):
         else:
             bot.reply_to(message, 'This link is not valid')
     except Exception as e:
-        bot.reply_to(message, 'ooops')
+        bot.reply_to(message, 'some problem occured, song has not been added')
 
 #Блок удаления жанра (жанр удаляется вместе со всеми песнями)
 @bot.message_handler(commands = ['del_genre'])
@@ -122,27 +132,33 @@ def del_genre_choice(call):
         if call.data:
             genre = call.data.split('_')[-1]
             chat_id = call.message.chat.id
-            result = db.delete_genre(genre)
-            if result:
-                bot.send_message(chat_id, 'success')
+            if genre == 'cancel':
+                bot.send_message(chat_id, 'canceled')
             else:
-                bot.send_message(chat_id, 'fail')
+                result = db.delete_genre(genre)
+                if result:
+                    bot.send_message(chat_id, 'success')
+                else:
+                    bot.send_message(chat_id, 'fail to delete genre')
 
 #Блок удаления песни
 @bot.message_handler(commands = ['del_song'])
 def del_song(message):
     chat_id = message.chat.id
-    msg = bot.send_message(chat_id, 'input link to song you want to delete')
+    msg = bot.send_message(chat_id, 'input link to song you want to delete or N/n to cancel')
     bot.register_next_step_handler(msg, del_song_handler)
 
 def del_song_handler(message):
     link = message.text
     chat_id = message.chat.id
-    result = db.delete_song(link)
-    if result:
-        bot.send_message(chat_id, 'success')
+    if link == 'N' or link == 'n':
+        bot.send_message(chat_id, 'canceled')
     else:
-        bot.send_message(chat_id, 'fail')
+        result = db.delete_song(link)
+        if result:
+            bot.send_message(chat_id, 'success')
+        else:
+            bot.send_message(chat_id, 'fail')
 
 if __name__ == '__main__':
     bot.polling()

@@ -109,9 +109,10 @@ class Database():
 		    song = Song(link = link, genre = genre)
 		    session.add(song)
 		    session.commit()
+		    return True
 		except IntegrityError:
 			session.rollback()
-			print('This song is already in database')
+			return False
 		finally:
 		    self.session.remove()
 
@@ -134,9 +135,10 @@ class Database():
 		    chat = Chat(chid = chat_id)
 		    session.add(chat)
 		    session.commit()
+		    return True
 		except IntegrityError:
 			session.rollback()
-			print('This chat is already in database')
+			return False
 		finally:
 		    self.session.remove()
 
@@ -146,18 +148,24 @@ class Database():
 		    chat = session.query(Chat).filter(Chat.chid == chat_id).first()
 		    session.delete(chat)
 		    session.commit()
+		    return True
 		except UnmappedInstanceError:
 			session.rollback()
-			print('There is no such chat')
+			return False
 		finally:
 			self.session.remove()
 
 	def add_listened(self, chat_id, song):
 		session = self.session()
-		listened_song = Listened(song = song, chat_id = chat_id)
-		session.add(listened_song)
-		session.commit()
-		self.session.remove()
+		try:
+		    listened_song = Listened(song = song, chat_id = chat_id)
+		    session.add(listened_song)
+		    session.commit()
+		    return True
+		except Exception as e:
+			return False
+		finally:
+		    self.session.remove()
 
 	def get_random_from_genre(self, genre, chat_id):
 		session = self.session()
@@ -184,13 +192,3 @@ class Database():
 		genres = [genre.genre for genre in genres_query]
 		self.session.remove()
 		return genres
-
-	def add_test_data(self):
-		self.update_all()
-		for genre in ['folk', 'rock', 'techno']:
-			self.add_genre(genre)
-			for i in range(10):
-				link = '{0}_{1}'.format(genre, i)
-				self.add_song(link, genre)
-		for i in range(10):
-			self.add_chat(i)
