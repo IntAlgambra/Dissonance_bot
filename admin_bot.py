@@ -41,10 +41,13 @@ def make_del_genre_keyboard():
 
 #Создаем функцию для проверки валидности ссылки на песню на SoundCloud
 def validate_link(link):
-    r = requests.get(link)
-    if r.status_code == requests.codes.ok:
-        return True
-    else:
+    try:
+        r = requests.get(link)
+        if r.status_code == requests.codes.ok:
+            return True
+        else:
+            return False
+    except requests.exceptions.MissingSchema as e:
         return False
 
 #создаем объект бота, запрещаем многопоточность по требованиям хостинга

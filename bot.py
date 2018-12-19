@@ -45,7 +45,7 @@ def send_welcome(message):
     bot.send_message(chat_id, 'Pssss, man, do you want some music?', reply_markup = genre_keyboard)
 
 #Обработчик нажатия на кнопку жанра
-@bot.callback_query_handler(func=lambda call: call.data in genres)
+@bot.callback_query_handler(func=lambda call: call.data in db.get_genres())
 def genre_choice(call):
     if call.message:
         if call.data:
@@ -55,9 +55,10 @@ def genre_choice(call):
             message_id = call.message.message_id
             if link:
                 listen_or_choice_keyboard = make_listen_or_choice_keyboard(link)
-                bot.send_message(chat_id, 'Enjoy!', reply_markup = listen_or_choice_keyboard)
+                bot.send_message(chat_id, link, reply_markup = listen_or_choice_keyboard)
                 db.add_listened(chat_id, link)
             else:
+                genre_keyboard = make_genre_keyboard()
                 bot.send_message(chat_id, 'you have listened all, try new genre!', reply_markup = genre_keyboard)
 
 #Обработчик нажатия на кнопку запроса нового трека

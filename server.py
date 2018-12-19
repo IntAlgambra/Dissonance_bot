@@ -12,7 +12,7 @@ from bot import bot
 from admin_bot import bot as admin_bot
 
 #Базовый url веб приложения, на котором крутится сервер с ботом при запуске на локальном компьютере
-WEBHOOK_BASE = 'https://d93462fe.ngrok.io'
+WEBHOOK_BASE = 'https://781a0059.ngrok.io'
 #Базовый url при запуске на сервере (раскомментировать при запуске на сервере)
 #WEBHOOK_BASE = 'https://dissonancebot.pythonanywhere.com'
 BOT_URL = '/bot'
@@ -31,7 +31,7 @@ def index():
     return('This is sochnye bitochky bots app')
 
 #Обработчки запросов от телеги к рабочему боту
-@app.route('/bot/', methods = ['POST', 'GET'])
+@app.route('/bot', methods = ['POST', 'GET'])
 def bot_app():
     if request.method == 'POST':
         update_json = request.get_data().decode('utf-8')
@@ -42,7 +42,7 @@ def bot_app():
         return('This is sochnye bitochky bot app')
 
 #Обработчик запросов от телеги к админскому боту
-@app.route('/admin_bot/', methods = ['POST', 'GET'])
+@app.route('/admin_bot', methods = ['POST', 'GET'])
 def admin_bot_app():
     if request.method == 'POST':
         update_json = request.get_data().decode('utf-8')
