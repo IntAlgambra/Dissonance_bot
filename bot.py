@@ -14,7 +14,7 @@ TOKEN = '695230871:AAEllCSIVMCT8kwYC0LPxRdsEm80Pe7qvRY'
 apihelper.proxy = {'https': 'socks5://127.0.0.1:9150'}
 
 #Создаем объект для доступа к базе данных
-db = Database('test_database')
+db = Database('database')
 
 #Создаем объект клавиатуры
 def make_genre_keyboard():
@@ -41,8 +41,11 @@ bot = telebot.TeleBot(TOKEN, threaded = False)
 def send_welcome(message):
     chat_id = message.chat.id
     db.add_chat(chat_id)
-    genre_keyboard = make_genre_keyboard()
-    bot.send_message(chat_id, 'Pssss, man, do you want some music?', reply_markup = genre_keyboard)
+    if db.get_genres():
+        genre_keyboard = make_genre_keyboard()
+        bot.send_message(chat_id, 'Pssss, man, do you want some music?', reply_markup = genre_keyboard)
+    else:
+        bot.send_message(chat_id, 'Sorry, there are no genres yet')
 
 #Обработчик нажатия на кнопку жанра
 @bot.callback_query_handler(func=lambda call: call.data in db.get_genres())
@@ -65,8 +68,11 @@ def genre_choice(call):
 @bot.callback_query_handler(func = lambda call: call.data == 'new_track')
 def new_genre_choice(call):
     chat_id = call.message.chat.id
-    genre_keyboard = make_genre_keyboard()
-    bot.send_message(chat_id, 'Choose genre!', reply_markup = genre_keyboard)
+    if db.get_genres():
+        genre_keyboard = make_genre_keyboard()
+        bot.send_message(chat_id, 'Choose genre!', reply_markup = genre_keyboard)
+    else:
+        bot.send_message(chat_id, 'Sorry, there are no genres yet')
 
 if __name__ == '__main__':
     bot.polling()

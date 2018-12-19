@@ -15,7 +15,7 @@ TOKEN = '703792165:AAHXhlm08UQ05UjqkrjxAEYYJfTA2Lxmubo'
 apihelper.proxy = {'https': 'socks5://127.0.0.1:9150'}
 
 #Создаем объект для доступа к базе данных
-db = Database('test_database')
+db = Database('database')
 
 #Создаем объект клавиатуры для добавления песни
 def make_add_song_keyboard():
@@ -127,6 +127,7 @@ def link_handler(message, genre):
 @bot.message_handler(commands = ['del_genre'])
 def del_genre(message):
     chat_id = message.chat.id
+    del_genre_keyboard = make_del_genre_keyboard()
     bot.send_message(chat_id, 'choose genre', reply_markup = del_genre_keyboard)
 
 @bot.callback_query_handler(func=lambda call: call.data.split('_')[0] == 'del')
