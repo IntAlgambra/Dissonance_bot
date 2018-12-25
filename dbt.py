@@ -198,3 +198,17 @@ class Database():
 			return False
 		finally:
 			self.session.remove()
+
+	def rename_genre(self, old_genre, new_genre):
+		session = self.session()
+		try:
+			genre = session.query(Genre).filter(Genre.genre == old_genre).first()
+			genre.genre = new_genre
+			session.add(genre)
+			session.commit()
+			return True
+		except Exception as e:
+			print(e)
+			return False
+		finally:
+			self.session.remove()

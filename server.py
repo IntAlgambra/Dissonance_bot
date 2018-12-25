@@ -11,10 +11,8 @@ import telebot
 from bot import bot
 from admin_bot import bot as admin_bot
 
-#Базовый url веб приложения, на котором крутится сервер с ботом при запуске на локальном компьютере
-WEBHOOK_BASE = 'https://6cffd06d.ngrok.io'
-#Базовый url при запуске на сервере (раскомментировать при запуске на сервере)
-#WEBHOOK_BASE = 'https://dissonancebot.pythonanywhere.com'
+#Базовый url веб приложения, на котором крутится сервер с ботом
+WEBHOOK_BASE = 'input url here'
 BOT_URL = '/bot'
 ADMIN_BOT_URL = '/admin_bot'
 #url для webhook рабочего бота

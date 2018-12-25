@@ -1,4 +1,3 @@
-# Token 695230871:AAEllCSIVMCT8kwYC0LPxRdsEm80Pe7qvRY
 
 #Импортируем модуль для взаимодействия с базой данных
 from dbt import Database
@@ -8,7 +7,7 @@ import telebot
 from telebot import types
 from telebot import apihelper
 
-TOKEN = '695230871:AAEllCSIVMCT8kwYC0LPxRdsEm80Pe7qvRY'
+TOKEN = 'input tour token here'
 
 #Прокси для тестирования бота на локальном компе через тор, при развертывании на сервере закомментировать
 apihelper.proxy = {'https': 'socks5://127.0.0.1:9150'}

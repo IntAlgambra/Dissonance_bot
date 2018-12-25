@@ -1,4 +1,4 @@
-# Token 703792165:AAHXhlm08UQ05UjqkrjxAEYYJfTA2Lxmubo
+
 
 from dbt import Database
 
@@ -9,7 +9,7 @@ from telebot import apihelper
 from telebot import types
 
 
-TOKEN = '703792165:AAHXhlm08UQ05UjqkrjxAEYYJfTA2Lxmubo'
+TOKEN = 'input your token here'
 
 #Прокси для тестирования бота на локальном компе через тор, при развертывании на сервере закомментировать
 apihelper.proxy = {'https': 'socks5://127.0.0.1:9150'}
@@ -38,6 +38,18 @@ def make_del_genre_keyboard():
     cancel_button = types.InlineKeyboardButton(text = 'cancel', callback_data = 'del_cancel')
     del_genre_keyboard.add(cancel_button)
     return(del_genre_keyboard)
+
+#Создаем функцию для создания клавиатуры для переименования жанра
+def make_rename_genre_keyboard():
+    genres = db.get_genres()
+    rename_genre_keyboard = types.InlineKeyboardMarkup(row_width = 1)
+    for genre in genres:
+        button = types.InlineKeyboardButton(text = genre, callback_data = 'rename_{}'.format(genre))
+        rename_genre_keyboard.add(button)
+    cancel_button = types.InlineKeyboardButton(text = 'cancel', callback_data = 'rename_cancel')
+    rename_genre_keyboard.add(cancel_button)
+    return(rename_genre_keyboard)
+
 
 #Создаем функцию для проверки валидности ссылки на песню на SoundCloud
 def validate_link(link):
@@ -163,6 +175,35 @@ def del_song_handler(message):
             bot.send_message(chat_id, 'success')
         else:
             bot.send_message(chat_id, 'fail')
+
+#Блок переименования жанра:
+@bot.message_handler(commands - ['rename_genre'])
+def rename_genre(message):
+    chat_id = message.chat.id
+    rename_genre_keyboard = make_rename_genre_keyboard()
+    msg = bot.send_message(chat_id, 'Choose genre to rename', reply_markup = rename_genre_keyboard)
+
+
+@bot.callback_query_handler(func=lambda call: call.data.split('_')[0] == 'rename')
+def rename_genre_choice(call):
+    if call.message:
+        if call.data:
+            genre = call.data.split('_')[-1]
+            chat_id = call.message.chat.id
+            if genre == 'cancel':
+                bot.send_message(chat_id, 'canceled')
+            else:
+                msg = bot.send_message(chat_id, 'input new genre name')
+                bot.register_next_step_handler(msg, rename_genre_handler, genre)
+
+def rename_genre_handler(message, old_genre_name):
+    chat_id = message.chat.id
+    new_genre_name = message.text
+    if db.rename_genre(old_genre_name, new_genre_name):
+        bot.send_message(chat_id, 'genre was renamed')
+    else:
+        bot.reply_to(message, 'Some problem occured, genre was not renamed')
+
 
 if __name__ == '__main__':
     bot.polling()
