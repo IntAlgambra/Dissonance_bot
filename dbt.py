@@ -212,3 +212,4 @@ class Database():
 			return False
 		finally:
 			self.session.remove()
+

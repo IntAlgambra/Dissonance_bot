@@ -1,6 +1,5 @@
 from flask import Flask
 from flask import request
-from flask import jsonify
 
 from flask_sslify import SSLify
 
@@ -11,14 +10,16 @@ import telebot
 from bot import bot
 from admin_bot import bot as admin_bot
 
-#Базовый url веб приложения, на котором крутится сервер с ботом
-WEBHOOK_BASE = 'input url here'
+#Базовый url веб приложения, на котором крутится сервер с ботом при запуске на локальном компьютере через ngrok
+#WEBHOOK_BASE = 'YOUR URL'
+#Базовый url при запуске на сервере (раскомментировать при запуске на сервере)
+WEBHOOK_BASE = 'YOUR WEB APP URL'
 BOT_URL = '/bot'
 ADMIN_BOT_URL = '/admin_bot'
 #url для webhook рабочего бота
 BOT_WEBHOOK = WEBHOOK_BASE + BOT_URL
 #url для webhook админского бота
-ADMIN_BOT_WEBHOOK = WEBHOOK_BASE + ADMIN_BOT_URL 
+ADMIN_BOT_WEBHOOK = WEBHOOK_BASE + ADMIN_BOT_URL
 
 app = Flask(__name__)
 sslify = SSLify(app)
@@ -35,7 +36,7 @@ def bot_app():
         update_json = request.get_data().decode('utf-8')
         update = telebot.types.Update.de_json(update_json)
         bot.process_new_updates([update])
-        return('')
+        return 'ok', 200
     else:
         return('This is sochnye bitochky bot app')
 
@@ -46,7 +47,7 @@ def admin_bot_app():
         update_json = request.get_data().decode('utf-8')
         update = telebot.types.Update.de_json(update_json)
         admin_bot.process_new_updates([update])
-        return('')
+        return 'ok', 200
     else:
         return('This is sochnye bitochky admin bot app')
 

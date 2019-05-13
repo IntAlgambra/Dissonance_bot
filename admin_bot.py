@@ -1,18 +1,16 @@
-
-
 from dbt import Database
 
 import requests
 
 import telebot
-from telebot import apihelper
+#from telebot import apihelper
 from telebot import types
 
 
-TOKEN = 'input your token here'
+TOKEN = 'YOUR TOKEN'
 
 #Прокси для тестирования бота на локальном компе через тор, при развертывании на сервере закомментировать
-apihelper.proxy = {'https': 'socks5://127.0.0.1:9150'}
+#apihelper.proxy = {'https': 'socks5://127.0.0.1:9150'}
 
 #Создаем объект для доступа к базе данных
 db = Database('database')
@@ -50,7 +48,6 @@ def make_rename_genre_keyboard():
     rename_genre_keyboard.add(cancel_button)
     return(rename_genre_keyboard)
 
-
 #Создаем функцию для проверки валидности ссылки на песню на SoundCloud
 def validate_link(link):
     try:
@@ -68,8 +65,6 @@ bot = telebot.TeleBot(TOKEN, threaded = False)
 #Обработчик команды старт
 @bot.message_handler(commands = ['start'])
 def send_welcome(message):
-    user = message.from_user
-    user_id = user.id
     bot.reply_to(message, 'Welcome, master of techno and style!')
 
 #Получение списка жанров
@@ -122,14 +117,18 @@ def add_genre_choice(call):
             else:
                 msg = bot.send_message(chat_id, 'input link to SoundCloud')
                 bot.register_next_step_handler(msg, link_handler, genre)
+            bot.answer_callback_query(call.id, text = '')
 
 def link_handler(message, genre):
     try:
         chat_id = message.chat.id
         link = message.text
         if validate_link(link):
-            db.add_song(link, genre)
-            bot.send_message(chat_id, 'added')
+            result = db.add_song(link, genre)
+            if result:
+                bot.send_message(chat_id, 'added')
+            else:
+                bot.send_message(chat_id, 'this song is already in database')
         else:
             bot.reply_to(message, 'This link is not valid')
     except Exception as e:
@@ -146,7 +145,7 @@ def del_genre(message):
 def del_genre_choice(call):
     if call.message:
         if call.data:
-            genre = call.data.split('_')[-1]
+            genre = call.data[4:]
             chat_id = call.message.chat.id
             if genre == 'cancel':
                 bot.send_message(chat_id, 'canceled')
@@ -156,6 +155,7 @@ def del_genre_choice(call):
                     bot.send_message(chat_id, 'success')
                 else:
                     bot.send_message(chat_id, 'fail to delete genre')
+            bot.answer_callback_query(call.id, text = '')
 
 #Блок удаления песни
 @bot.message_handler(commands = ['del_song'])
@@ -177,11 +177,11 @@ def del_song_handler(message):
             bot.send_message(chat_id, 'fail')
 
 #Блок переименования жанра:
-@bot.message_handler(commands - ['rename_genre'])
+@bot.message_handler(commands = ['rename_genre'])
 def rename_genre(message):
     chat_id = message.chat.id
     rename_genre_keyboard = make_rename_genre_keyboard()
-    msg = bot.send_message(chat_id, 'Choose genre to rename', reply_markup = rename_genre_keyboard)
+    bot.send_message(chat_id, 'Choose genre to rename', reply_markup = rename_genre_keyboard)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.split('_')[0] == 'rename')
@@ -195,6 +195,7 @@ def rename_genre_choice(call):
             else:
                 msg = bot.send_message(chat_id, 'input new genre name')
                 bot.register_next_step_handler(msg, rename_genre_handler, genre)
+            bot.answer_callback_query(call.id, text = '')
 
 def rename_genre_handler(message, old_genre_name):
     chat_id = message.chat.id
@@ -203,7 +204,6 @@ def rename_genre_handler(message, old_genre_name):
         bot.send_message(chat_id, 'genre was renamed')
     else:
         bot.reply_to(message, 'Some problem occured, genre was not renamed')
-
 
 if __name__ == '__main__':
     bot.polling()
